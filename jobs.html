@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשת הקשרים המקצועית</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #titleBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+            z-index: 100;
+        }
+        #uploadBar {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+        }
+        #searchBar {
+            position: fixed;
+            top: 220px;
+            left: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+        }
+        #linkedinFilesBar {
+            position: fixed;
+            top: 280px;
+            left: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+        }
+        #linkedinFilesBar p {
+            margin: 5px 0;
+        }
+        #searchInput, #cvInput, #linkedinInput {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            margin: 5px 0;
+            width: 100%;
+        }
+        #uploadBar label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: block;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+        }
+        .logo-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 340px auto 60px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            flex: 1;
+        }
+        .contact-box {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            cursor: pointer;
+        }
+        .contact-box:hover {
+            transform: scale(1.05);
+        }
+        .contact-box h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+        .contact-box p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .contact-box p.hebrew {
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+        }
+        .no-contacts {
+            text-align: center;
+            font-size: 16px;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+            color: #ffcc00;
+        }
+        .message-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ffcc00;
+            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+            max-width: 500px;
+            z-index: 1000;
+            display: none;
+        }
+        .message-modal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .message-modal input, .message-modal textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .message-modal button {
+            padding: 10px 20px;
+            background: #00ccff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .message-modal button:hover {
+            background: #00ff99;
+        }
+        .legend {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+        }
+        .legend table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .legend th, .legend td {
+            padding: 8px;
+            text-align: right;
+            cursor: pointer;
+        }
+        .legend td:hover {
+            background: rgba(0, 255, 255, 0.2);
+        }
+        .legend span {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            margin-left: 8px;
+            border-radius: 50%;
+        }
+        .notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #00ff99;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 14px;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        footer a {
+            color: #00ccff;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div id="titleBar">רשת הקשרים המקצועית</div>
+    <div id="uploadBar">
+        <label for="cvInput">העלאת קורות חיים</label>
+        <input type="file" id="cvInput" accept=".pdf">
+        <label for="linkedinInput">העלאת קובץ Connections.csv מלינקדין</label>
+        <input type="file" id="linkedinInput" accept=".csv">
+    </div>
+    <div id="searchBar">
+        <input type="text" id="searchInput" placeholder="חפש לפי שם או חברה...">
+    </div>
+    <div id="linkedinFilesBar">
+        <p>קובץ LinkedIn להעלאה:</p>
+        <p>Connections.csv</p>
+    </div>
+    <div class="legend" id="legend">
+        <table id="legendTable">
+            <tr><th>קבוצה</th><th>צבע מסגרת</th></tr>
+        </table>
+    </div>
+    <div class="logo-container">
+        <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#00ccff" stroke-width="5"/>
+            <path d="M30,50 L70,50 M50,30 L50,70 M35,35 L65,65 M65,35 L35,65" stroke="#00ff99" stroke-width="3"/>
+        </svg>
+    </div>
+    <div class="container" id="contactContainer"></div>
+    <div class="message-modal" id="messageModal">
+        <button class="close-btn" onclick="closeMessageModal()">X</button>
+        <h3>שלח הודעה</h3>
+        <input type="text" id="messageSubject" placeholder="נושא">
+        <textarea id="messageBody" rows="10" placeholder="הודעה"></textarea>
+        <input type="text" id="messageRecipient" placeholder="אימייל או כתובת LinkedIn של הנמען">
+        <button onclick="sendMessage()">שלח</button>
+        <button onclick="copyMessage()">העתק</button>
+    </div>
+    <div class="notification" id="notification"></div>
+    <footer>
+        כלי זה נבנה על ידי יניב אביסרור 
+        <a href="https://www.linkedin.com/in/yaniv-avisror" target="_blank">חפשו אותי בלינקדין</a>
+    </footer>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        let contactData = [];
+        let currentGroupFilter = null;
+        let detectedDomain = 'unknown';
+        let suggestedSkill = 'relevant high-tech expertise';
+
+        const domainKeywords = {
+            cybersecurity: ["cybersecurity", "penetration tester", "red team", "security analyst", "ciso", "soc analyst", "ethical hacker"],
+            development: ["developer", "software engineer", "full stack", "backend", "frontend", "python", "java", "javascript"],
+            devops: ["devops", "site reliability", "cloud engineer", "aws", "kubernetes", "docker", "ci/cd"],
+            ai: ["machine learning", "data scientist", "ai engineer", "deep learning", "nlp", "artificial intelligence"],
+            data_science: ["data analyst", "data engineer", "business intelligence", "statistics", "big data"],
+            product_management: ["product manager", "product owner", "agile", "scrum", "roadmap"],
+            qa: ["quality assurance", "test automation", "qa engineer", "testing", "selenium"],
+            ux_ui: ["ux designer", "ui designer", "user experience", "user interface", "figma"],
+            it_support: ["it support", "help desk", "system administrator", "network engineer"],
+            other: ["project manager", "technical writer", "business analyst"]
+        };
+
+        const domainSkills = {
+            cybersecurity: "אבטחת מידע וחדירה למערכות",
+            development: "פיתוח תוכנה וטכנולוגיות ווב",
+            devops: "ניהול תשתיות ענן ותהליכי CI/CD",
+            ai: "למידת מכונה וניתוח נתונים מתקדם",
+            data_science: "ניתוח נתונים ומודלים סטטיסטיים",
+            product_management: "ניהול מוצר ופיתוח אסטרטגיה",
+            qa: "בדיקות אוטומציה ואבטחת איכות",
+            ux_ui: "עיצוב חוויית משתמש וממשקים",
+            it_support: "תמיכה טכנית וניהול רשתות",
+            other: "ניהול פרויקטים וניתוח עסקי",
+            unknown: "מומחיות טכנולוגית רלוונטית"
+        };
+
+        const domainSkillsEn = {
+            cybersecurity: "information security and penetration testing",
+            development: "software development and web technologies",
+            devops: "cloud infrastructure and CI/CD pipelines",
+            ai: "machine learning and advanced data analysis",
+            data_science: "data analysis and statistical modeling",
+            product_management: "product management and strategy development",
+            qa: "test automation and quality assurance",
+            ux_ui: "user experience and interface design",
+            it_support: "technical support and network management",
+            other: "project management and business analysis",
+            unknown: "relevant high-tech expertise"
+        };
+
+        const colors = [
+            "#00ccff", "#00ff99", "#cc00ff", "#ff9900", "#ff4444", "#ffcc00", "#00ffcc"
+        ];
+
+        let dynamicCategories = [];
+
+        function showNotification(message) {
+            const notification = document.getElementById("notification");
+            notification.textContent = message;
+            notification.style.display = "block";
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 3000);
+        }
+
+        function normalizeColumnName(name) {
+            if (!name) return '';
+            const lower = name.toLowerCase().replace(/[\s_]/g, '');
+            if (lower.includes('firstname') || lower.includes('givenname') || lower === 'firstname') return 'First Name';
+            if (lower.includes('lastname') || lower.includes('surname') || lower === 'lastname') return 'Last Name';
+            if (lower.includes('companyname') || lower.includes('company') || lower.includes('organization') || lower === 'company') return 'Company';
+            if (lower.includes('url') || lower.includes('profileurl') || lower.includes('linkedinurl') || lower === 'url') return 'URL';
+            if (lower.includes('position') || lower === 'position') return 'Position';
+            return name;
+        }
+
+        async function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    let text = reader.result;
+                    if (text.charCodeAt(0) === 0xFEFF) {
+                        text = text.slice(1);
+                    }
+                    resolve(text);
+                };
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        async function parseCSV(file, delimiter) {
+            return new Promise((resolve, reject) => {
+                console.log(`Parsing CSV file: ${file.name} with delimiter: "${delimiter.replace(/\t/, '\\t')}"`);
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    encoding: 'UTF-8',
+                    delimiter: delimiter,
+                    quoteChar: '"',
+                    transformHeader: (header) => normalizeColumnName(header.trim()),
+                    transform: (value) => value ? value.trim() : '',
+                    beforeFirstChunk: (chunk) => {
+                        const lines = chunk.split('\n');
+                        let headerIndex = lines.findIndex(line => line.includes('First Name'));
+                        if (headerIndex > 0) {
+                            return lines.slice(headerIndex).join('\n');
+                        }
+                        return chunk;
+                    },
+                    complete: (result) => {
+                        if (result.errors.length > 0) {
+                            console.error('PapaParse errors:', result.errors);
+                            reject(new Error('שגיאות בעיבוד: ' + result.errors.map(e => e.message).join(', ')));
+                        } else {
+                            console.log('Raw headers:', result.meta.fields);
+                            console.log('Normalized headers:', Object.keys(result.data[0] || {}));
+                            console.log('First 3 rows:', result.data.slice(0, 3));
+                            console.log('Total rows parsed:', result.data.length);
+                            resolve(result.data);
+                        }
+                    },
+                    error: (error) => {
+                        console.error('PapaParse error:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        async function processLinkedInFiles(files) {
+            console.log('Processing files:', files);
+            if (files.length !== 1 || files[0].name !== 'Connections.csv') {
+                alert('אנא העלה רק את הקובץ Connections.csv');
+                console.warn('Invalid file selection');
+                return false;
+            }
+
+            try {
+                const fileContent = await readFileAsText(files[0]);
+                console.log('First 500 characters of CSV:', fileContent.slice(0, 500));
+
+                let connections = null;
+                const delimiters = ['\t', ',', ';'];
+                for (const delimiter of delimiters) {
+                    try {
+                        connections = await parseCSV(files[0], delimiter);
+                        const headers = Object.keys(connections[0] || {});
+                        const requiredColumns = ['First Name', 'Last Name', 'Company', 'URL'];
+                        const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+                        if (missingColumns.length === 0 && connections.length > 0) {
+                            break;
+                        }
+                        connections = null;
+                    } catch (error) {
+                        console.warn(`Parsing failed with delimiter "${delimiter.replace(/\t/, '\\t')}":`, error.message);
+                    }
+                }
+
+                if (!connections) {
+                    throw new Error('לא ניתן לעבד את הקובץ. ודא שהוא בפורמט CSV תקין עם מפריד טאבים, פסיקים או נקודה-פסיק.');
+                }
+
+                const headers = Object.keys(connections[0] || {});
+                const requiredColumns = ['First Name', 'Last Name', 'Company', 'URL'];
+                const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+                if (missingColumns.length > 0) {
+                    const errorMsg = 'שגיאה: הקובץ Connections.csv חסר את העמודות הבאות: ' + missingColumns.join(', ');
+                    alert(errorMsg);
+                    console.error(errorMsg, 'Available headers:', headers);
+                    return false;
+                }
+
+                if (connections.length === 0) {
+                    alert('שגיאה: הקובץ Connections.csv ריק או לא מכיל נתונים תקינים');
+                    console.warn('Empty CSV data');
+                    return false;
+                }
+
+                alert('קובץ נטען עם ' + connections.length + ' שורות');
+                console.log('CSV data:', connections);
+
+                const rawContacts = connections
+                    .filter(conn => conn['First Name'] || conn['Last Name'])
+                    .map((conn, index) => {
+                        const firstName = conn['First Name'] || '';
+                        const lastName = conn['Last Name'] || '';
+                        const name = (firstName || lastName) ? (firstName + ' ' + lastName).trim() : 'Contact ' + (index + 1);
+                        const url = conn['URL'] && conn['URL'].startsWith('https://') ? conn['URL'] : 'לא זמין';
+                        const company = conn['Company'] || 'לא זמין';
+                        const position = conn['Position'] || 'לא זמין';
+
+                        let group = 'Professional';
+                        for (const [domain, keywords] of Object.entries(domainKeywords)) {
+                            if (position.toLowerCase().includes(domain) || keywords.some(k => position.toLowerCase().includes(k))) {
+                                group = domain.charAt(0).toUpperCase() + domain.slice(1);
+                                break;
+                            }
+                        }
+
+                        console.log(`Processing contact: ${name}, Company: ${company}, URL: ${url}, Group: ${group}`);
+
+                        return {
+                            id: (firstName + lastName).replace(/\s/g, '') || 'contact' + index,
+                            name,
+                            company,
+                            position,
+                            group,
+                            lang: 'Hebrew/Both',
+                            email: 'לא זמין; צור קשר דרך LinkedIn',
+                            phone: 'לא זמין',
+                            linkedin: url,
+                            target: ['Check Point', 'Palo Alto', 'CyberArk', 'Microsoft', 'Google', 'Amazon'].some(c => company.toLowerCase().includes(c.toLowerCase()))
+                        };
+                    });
+
+                if (rawContacts.length === 0) {
+                    console.warn('No valid contacts parsed, using fallback sample data');
+                    rawContacts.push(
+                        {
+                            id: 'itayamram',
+                            name: 'Itay Amram',
+                            company: 'Exsitu Cloud IT Services Ltd.',
+                            position: 'Information Security Analyst',
+                            group: 'Cybersecurity',
+                            lang: 'Hebrew/Both',
+                            email: 'לא זמין; צור קשר דרך LinkedIn',
+                            phone: 'לא זמין',
+                            linkedin: 'https://www.linkedin.com/in/itay-amram-849106246/',
+                            target: false
+                        },
+                        {
+                            id: 'chaimfrish',
+                            name: 'Chaim Frish',
+                            company: 'C2A Security',
+                            position: 'Full Stack Developer',
+                            group: 'Development',
+                            lang: 'Hebrew/Both',
+                            email: 'לא זמין; צור קשר דרך LinkedIn',
+                            phone: 'לא זמין',
+                            linkedin: 'https://www.linkedin.com/in/chaim-frish/',
+                            target: false
+                        }
+                    );
+                }
+
+                alert('נוצרו ' + rawContacts.length + ' אנשי קשר');
+                console.log('Raw contacts:', rawContacts);
+
+                contactData = rawContacts;
+                renderContactBoxes(contactData);
+                showNotification("קובץ LinkedIn הועלה והרשת המקצועית עודכנה בהצלחה!");
+                return true;
+            } catch (error) {
+                const errorMsg = 'שגיאה בעיבוד קובץ LinkedIn: ' + error.message;
+                alert(errorMsg);
+                console.error(errorMsg, error);
+                contactData = [
+                    {
+                        id: 'itayamram',
+                        name: 'Itay Amram',
+                        company: 'Exsitu Cloud IT Services Ltd.',
+                        position: 'Information Security Analyst',
+                        group: 'Cybersecurity',
+                        lang: 'Hebrew/Both',
+                        email: 'לא זמין; צור קשר דרך LinkedIn',
+                        phone: 'לא זמין',
+                        linkedin: 'https://www.linkedin.com/in/itay-amram-849106246/',
+                        target: false
+                    },
+                    {
+                        id: 'chaimfrish',
+                        name: 'Chaim Frish',
+                        company: 'C2A Security',
+                        position: 'Full Stack Developer',
+                        group: 'Development',
+                        lang: 'Hebrew/Both',
+                        email: 'לא זמין; צור קשר דרך LinkedIn',
+                        phone: 'לא זמין',
+                        linkedin: 'https://www.linkedin.com/in/chaim-frish/',
+                        target: false
+                    }
+                ];
+                renderContactBoxes(contactData);
+                showNotification("שגיאה בטעינת הקובץ. מוצגים נתוני דוגמה.");
+                return false;
+            }
+        }
+
+        async function analyzeCV(text) {
+            text = text.toLowerCase();
+            detectedDomain = 'unknown';
+            let domainCounts = {};
+
+            for (const [domain, keywords] of Object.entries(domainKeywords)) {
+                let count = keywords.reduce((sum, keyword) => sum + (text.match(new RegExp(keyword, 'gi')) || []).length, 0);
+                if (count > 0) {
+                    domainCounts[domain] = count;
+                }
+            }
+
+            if (Object.keys(domainCounts).length > 0) {
+                detectedDomain = Object.keys(domainCounts).reduce((a, b) => domainCounts[a] > domainCounts[b] ? a : b);
+            }
+
+            suggestedSkill = domainSkills[detectedDomain] || 'מומחיות טכנולוגית רלוונטית';
+            let suggestedSkillEn = domainSkillsEn[detectedDomain] || 'relevant high-tech expertise';
+
+            alert('תחום זוהה: ' + detectedDomain);
+            switch (detectedDomain) {
+                case "cybersecurity":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "cyber", name: "סייבר", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "development":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "developer", name: "מפתחים", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "devops":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "devops", name: "DevOps", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "ai":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "ai", name: "מומחי AI", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "data_science":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "data_science", name: "מדעני נתונים", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "product_management":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "product", name: "מנהלי מוצר", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "qa":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "qa", name: "בודקי תוכנה", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "ux_ui":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "ux_ui", name: "מעצבי UX/UI", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                case "it_support":
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "it_support", name: "תמיכה טכנית", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+                    break;
+                default:
+                    dynamicCategories = [
+                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "professional", name: "מקצועיים", color: colors[1] },
+                        { id: "target_company", name: "חברות יעד", color: colors[5] }
+                    ];
+            }
+            updateLegend();
+            renderContactBoxes(contactData);
+        }
+
+        function getContactCategory(d) {
+            if (d.target) return "target_company";
+            if (d.group === "HR" || d.position.toLowerCase().includes('recruit') || d.position.toLowerCase().includes('hr')) return "hr";
+            const domain = Object.keys(domainKeywords).find(dom => d.group.toLowerCase() === dom || d.position.toLowerCase().includes(dom));
+            return domain || "professional";
+        }
+
+        function updateLegend() {
+            const table = document.getElementById("legendTable");
+            table.innerHTML = "<tr><th>קבוצה</th><th>צבע מסגרת</th></tr>";
+            dynamicCategories.forEach(cat => {
+                const row = document.createElement("tr");
+                row.innerHTML = `<td data-group="${cat.id}">${cat.name}</td><td><span style="background: ${cat.color};"></span></td>`;
+                row.querySelector('td').addEventListener('click', () => {
+                    currentGroupFilter = cat.id;
+                    renderContactBoxes(contactData);
+                });
+                table.appendChild(row);
+            });
+            const style = document.createElement("style");
+            dynamicCategories.forEach(cat => {
+                style.textContent += `
+                    .contact-box.${cat.id} { border: 2px solid ${cat.color}; }
+                    .contact-box h3.${cat.id} { color: ${cat.color}; }
+                `;
+            });
+            document.head.appendChild(style);
+
+            const allRow = document.createElement("tr");
+            allRow.innerHTML = `<td data-group="all">כל הקבוצות</td><td><span style="background: #ffffff;"></span></td>`;
+            allRow.querySelector('td').addEventListener('click', () => {
+                currentGroupFilter = null;
+                renderContactBoxes(contactData);
+            });
+            table.appendChild(allRow);
+        }
+
+        function renderContactBoxes(data) {
+            console.log('Rendering contact boxes with data:', data);
+            const container = document.getElementById("contactContainer");
+            container.innerHTML = "";
+            let filteredData = data;
+            if (currentGroupFilter) {
+                filteredData = data.filter(d => getContactCategory(d) === currentGroupFilter);
+            }
+            if (filteredData.length === 0) {
+                const div = document.createElement("div");
+                div.className = "no-contacts";
+                div.textContent = "לא נמצאו אנשי קשר. אנא העלה קובץ Connections.csv תקין או בחר קבוצה אחרת.";
+                container.appendChild(div);
+                return;
+            }
+            filteredData.forEach(d => {
+                const category = getContactCategory(d);
+                const catName = dynamicCategories.find(c => c.id === category)?.name || category;
+                const div = document.createElement("div");
+                div.className = `contact-box ${category}`;
+                div.innerHTML = `
+                    <h3 class="${category}">${d.name}</h3>
+                    <p class="hebrew">חברה: ${d.company}</p>
+                    <p class="hebrew">תפקיד: ${d.position}</p>
+                    <p class="hebrew">קבוצה: ${catName}</p>
+                    <p class="hebrew">שפה: ${d.lang}</p>
+                    <p class="hebrew">אימייל: ${d.email}</p>
+                    <p class="hebrew">טלפון: ${d.phone}</p>
+                    <p class="hebrew">LinkedIn: ${d.linkedin !== 'לא זמין' ? `<a href="${d.linkedin}" target="_blank" style="color: #00ccff;">${d.linkedin}</a>` : 'לא זמין'}</p>
+                `;
+                div.addEventListener("click", () => openMessageModal(d));
+                container.appendChild(div);
+            });
+        }
+
+        function openMessageModal(d) {
+            const messageModal = document.getElementById("messageModal");
+            const messageSubject = document.getElementById("messageSubject");
+            const messageBody = document.getElementById("messageBody");
+            const messageRecipient = document.getElementById("messageRecipient");
+            const category = getContactCategory(d);
+            const domain = detectedDomain !== 'unknown' ? detectedDomain : 'high-tech';
+            const skill = domainSkills[detectedDomain] || 'מומחיות טכנולוגית רלוונטית';
+            const skillEn = domainSkillsEn[detectedDomain] || 'relevant high-tech expertise';
+            let msgSubject, msgBody;
+            if (category === "hr") {
+                msgSubject = `חיפוש הזדמנויות תעסוקה ב-${d.company || "חברתך"}`;
+                msgBody = `שלום ${d.name},\n\nאני [Your Name], מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומחפש הזדמנויות תעסוקה ב-${d.company || "חברתך"}. לאור הניסיון שלי ב-${skill}, אשמח לדון בתפקידים פתוחים או לקבל המלצות למנהלי גיוס. האם תוכל/י לשתף פרטים נוספים או לקבוע שיחה קצרה?\n\nתודה רבה,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional seeking opportunities at ${d.company || "your company"}. With my experience in ${skillEn}, I’d love to discuss open roles or get referrals to hiring managers. Could you share further details or schedule a brief call?\n\nBest regards,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+            } else if (category === "target_company") {
+                msgSubject = `חקירת הזדמנויות ב-${d.company || "חברתך"}`;
+                msgBody = `שלום ${d.name},\n\nשמי [Your Name], ואני מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain} עם עניין רב ב-${d.company || "חברתך"}. בהתבסס על המוניטין המרשים של החברה, אשמח לחקור הזדמנויות עבודה או שיתופי פעולה שבהם אוכל לתרום מהניסיון שלי ב-${skill}. האם תוכל/י להפנות אותי לאיש קשר רלוונטי או לשתף פרטים נוספים?\n\nתודה מראש,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional with a strong interest in ${d.company || "your company"}. Given your company’s impressive reputation, I’d like to explore job opportunities or collaborations where I can contribute my expertise in ${skillEn}. Could you direct me to a relevant contact or share further details?\n\nThank you,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+            } else {
+                msgSubject = "הרחבת רשת מקצועית בתחום ההייטק";
+                msgBody = `שלום ${d.name},\n\nאני [Your Name], עוסק בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומעוניין להרחיב את הרשת המקצועית שלי עם מומחים ב-${d.company || "תחומך"}. עם ניסיון ב-${skill}, אני מחפש הזדמנויות לשיתוף ידע, שיתופי פעולה או המלצות. אשמח לקבוע שיחה קצרה כדי להכיר טוב יותר.\n\nבברכה,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional looking to expand my network with experts at ${d.company || "your field"}. With experience in ${skillEn}, I’m eager to explore knowledge sharing, collaborations, or referrals. Would you be open to a brief call to connect?\n\nBest regards,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+            }
+            messageSubject.value = msgSubject;
+            messageBody.value = msgBody;
+            messageRecipient.value = d.email || d.linkedin;
+            messageModal.style.display = "block";
+        }
+
+        window.closeMessageModal = function() {
+            document.getElementById("messageModal").style.display = "none";
+        };
+
+        window.sendMessage = function() {
+            const subject = document.getElementById("messageSubject").value;
+            const body = document.getElementById("messageBody").value;
+            const recipient = document.getElementById("messageRecipient").value;
+            console.log('שליחת הודעה:\nנושא: ' + subject + '\nאל: ' + recipient + '\nתוכן: ' + body);
+            alert("ההודעה נרשמה בקונסולה (Ctrl+Shift+I). העתק ושלח דרך אימייל או LinkedIn.");
+            closeMessageModal();
+        };
+
+        window.copyMessage = function() {
+            const subject = document.getElementById("messageSubject").value;
+            const body = document.getElementById("messageBody").value;
+            const text = 'נושא: ' + subject + '\n\n' + body;
+            navigator.clipboard.writeText(text).then(() => {
+                alert("ההודעה הועתקה ללוח!");
+            });
+        };
+
+        document.getElementById("cvInput").addEventListener("change", async function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === "application/pdf") {
+                alert('נבחר קובץ PDF: ' + file.name);
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const typedArray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+                        let text = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => item.str).join(' ') + ' ';
+                        }
+                        await analyzeCV(text);
+                        showNotification("קובץ קורות החיים הועלה בהצלחה!");
+                    } catch (error) {
+                        alert('שגיאה בקריאת קובץ PDF: ' + error.message);
+                        console.error(error);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert("אנא העלה קובץ PDF (.pdf) עם תוכן קורות חיים.");
+            }
+        });
+
+        document.getElementById("linkedinInput").addEventListener("change", async function(e) {
+            console.log('LinkedIn file input changed:', e.target.files);
+            const files = e.target.files;
+            if (files.length > 0) {
+                await processLinkedInFiles(files);
+            } else {
+                alert("לא נבחרו קבצים.");
+                console.warn('No files selected');
+            }
+        });
+
+        document.getElementById("searchInput").addEventListener("input", () => {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            const filteredData = contactData.filter(d => 
+                d.name.toLowerCase().includes(query) || 
+                d.company.toLowerCase().includes(query)
+            );
+            renderContactBoxes(filteredData);
+        });
+
+        // Initial categories (default: cybersecurity)
+        analyzeCV("penetration tester");
+    </script>
+</body>
+</html>
