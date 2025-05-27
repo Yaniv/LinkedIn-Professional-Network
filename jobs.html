@@ -83,9 +83,27 @@
             width: 100px;
             height: 100px;
         }
+        .job-search-button {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #00ccff, #00ff99);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 255, 255, 0.3);
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+        .job-search-button:hover {
+            background: linear-gradient(45deg, #00ff99, #00ccff);
+            transform: scale(1.05);
+        }
         .container {
             max-width: 1200px;
-            margin: 340px auto 60px;
+            margin: 360px auto 60px;
             padding: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -122,7 +140,7 @@
             direction: rtl;
             color: #ffcc00;
         }
-        .message-modal {
+        .message-modal, .tips-modal, .jobs-modal {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -138,7 +156,7 @@
             z-index: 1000;
             display: none;
         }
-        .message-modal .close-btn {
+        .message-modal .close-btn, .tips-modal .close-btn, .jobs-modal .close-btn {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -151,7 +169,7 @@
             cursor: pointer;
             font-size: 12px;
         }
-        .message-modal input, .message-modal textarea {
+        .message-modal input, .message-modal textarea, .jobs-modal input {
             width: 100%;
             margin: 10px 0;
             padding: 5px;
@@ -159,7 +177,7 @@
             border-radius: 5px;
             font-size: 14px;
         }
-        .message-modal button {
+        .message-modal button, .jobs-modal button, .tips-modal button {
             padding: 10px 20px;
             background: #00ccff;
             color: #fff;
@@ -168,8 +186,18 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .message-modal button:hover {
+        .message-modal button:hover, .jobs-modal button:hover, .tips-modal button:hover {
             background: #00ff99;
+        }
+        .tips-modal p {
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+            margin: 10px 0;
+        }
+        .tips-modal .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
         }
         .legend {
             position: fixed;
@@ -230,6 +258,23 @@
         footer a:hover {
             text-decoration: underline;
         }
+        .jobs-modal ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .jobs-modal li {
+            margin: 5px 0;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+        }
+        .jobs-modal li a {
+            color: #00ccff;
+            text-decoration: none;
+        }
+        .jobs-modal li a:hover {
+            text-decoration: underline;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -260,6 +305,7 @@
             <circle cx="50" cy="50" r="40" fill="none" stroke="#00ccff" stroke-width="5"/>
             <path d="M30,50 L70,50 M50,30 L50,70 M35,35 L65,65 M65,35 L35,65" stroke="#00ff99" stroke-width="3"/>
         </svg>
+        <button class="job-search-button" onclick="openJobsModal()">חפש משרות</button>
     </div>
     <div class="container" id="contactContainer"></div>
     <div class="message-modal" id="messageModal">
@@ -270,6 +316,21 @@
         <input type="text" id="messageRecipient" placeholder="אימייל או כתובת LinkedIn של הנמען">
         <button onclick="sendMessage()">שלח</button>
         <button onclick="copyMessage()">העתק</button>
+    </div>
+    <div class="tips-modal" id="tipsModal">
+        <button class="close-btn" onclick="closeTipsModal()">X</button>
+        <h3>טיפים לראיון עבודה</h3>
+        <p id="tipContent"></p>
+        <div class="navigation">
+            <button onclick="prevTip()">קודם</button>
+            <button onclick="nextTip()">הבא</button>
+        </div>
+    </div>
+    <div class="jobs-modal" id="jobsModal">
+        <button class="close-btn" onclick="closeJobsModal()">X</button>
+        <h3>משרות זמינות</h3>
+        <ul id="jobsList"></ul>
+        <button onclick="refreshJobs()">רענן משרות</button>
     </div>
     <div class="notification" id="notification"></div>
     <footer>
@@ -283,6 +344,7 @@
         let currentGroupFilter = null;
         let detectedDomain = 'unknown';
         let suggestedSkill = 'relevant high-tech expertise';
+        let currentTipIndex = 0;
 
         const domainKeywords = {
             cybersecurity: ["cybersecurity", "penetration tester", "red team", "security analyst", "ciso", "soc analyst", "ethical hacker"],
@@ -329,6 +391,14 @@
             "#00ccff", "#00ff99", "#cc00ff", "#ff9900", "#ff4444", "#ffcc00", "#00ffcc"
         ];
 
+        const interviewTips = [
+            "חקרו את החברה לעומק לפני הראיון: הכירו את המוצרים, השירותים והתרבות הארגונית שלהם.",
+            "הכינו תשובות לשאלות נפוצות כמו 'ספר לי על עצמך' והדגישו את החוזקות שלכם.",
+            "הציגו דוגמאות קונקרטיות להישגים מקצועיים תוך שימוש בשיטת STAR (Situation, Task, Action, Result).",
+            "שאלו שאלות חכמות על התפקיד והצוות כדי להראות עניין ומוטיבציה.",
+            "תרגלו תקשורת ברורה ובטוחה, והקפידו על שפת גוף חיובית במהלך הראיון."
+        ];
+
         let dynamicCategories = [];
 
         function showNotification(message) {
@@ -339,6 +409,22 @@
                 notification.style.display = "none";
             }, 3000);
         }
+
+        function showTip(index) {
+            const tipContent = document.getElementById("tipContent");
+            tipContent.textContent = interviewTips[index];
+            document.getElementById("tipsModal").style.display = "block";
+        }
+
+        window.prevTip = function() {
+            currentTipIndex = (currentTipIndex - 1 + interviewTips.length) % interviewTips.length;
+            showTip(currentTipIndex);
+        };
+
+        window.nextTip = function() {
+            currentTipIndex = (currentTipIndex + 1) % interviewTips.length;
+            showTip(currentTipIndex);
+        };
 
         function normalizeColumnName(name) {
             if (!name) return '';
@@ -761,6 +847,14 @@
             document.getElementById("messageModal").style.display = "none";
         };
 
+        window.closeTipsModal = function() {
+            document.getElementById("tipsModal").style.display = "none";
+        };
+
+        window.closeJobsModal = function() {
+            document.getElementById("jobsModal").style.display = "none";
+        };
+
         window.sendMessage = function() {
             const subject = document.getElementById("messageSubject").value;
             const body = document.getElementById("messageBody").value;
@@ -777,6 +871,169 @@
             navigator.clipboard.writeText(text).then(() => {
                 alert("ההודעה הועתקה ללוח!");
             });
+        };
+
+        function simulateJobSearch(domain) {
+            const jobListings = {
+                cybersecurity: [
+                    { title: "אנליסט אבטחת מידע", company: "Check Point", location: "תל אביב", url: "https://www.checkpoint.com/careers" },
+                    { title: "מומחה חדירה", company: "CyberArk", location: "הרצליה", url: "https://www.cyberark.com/careers" },
+                    { title: "סוקר אבטחת מידע PT", company: "ארגון פיננסי", location: "שפלה", url: "https://www.sqlink.com" },
+                    { title: "מהנדס אבטחת מידע", company: "Microsoft", location: "הרצליה", url: "https://careers.microsoft.com" },
+                    { title: "חוקר חולשות", company: "סטארט-אפ סייבר", location: "תל אביב", url: "https://www.gotfriends.co.il" },
+                    { title: "מיישם הגנת סייבר", company: "ארגון ממשלתי", location: "ירושלים", url: "https://jobs.johnbryce.co.il" },
+                    { title: "מנהל CSOC", company: "בנק השקעות", location: "תל אביב", url: "https://www.nisha.co.il" },
+                    { title: "אחראי מודעות סייבר", company: "ארגון ציבורי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מומחה אבטחת ענן", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "מנחה סייבר", company: "חברה גדולה", location: "שרון", url: "https://www.sqlink.com" }
+                ],
+                development: [
+                    { title: "מפתח Full Stack", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "מהנדס תוכנה", company: "Google", location: "חיפה", url: "https://careers.google.com" },
+                    { title: "מפתח Python", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מפתח Web", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מפתח Mobile", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "Computer Vision Developer", company: "חברת הייטק", location: "מרכז", url: "https://www.dialog.co.il" },
+                    { title: "מפתח תוכנה", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "מפתח WordPress", company: "סוכנות דיגיטל", location: "תל אביב", url: "https://www.dialog.co.il" },
+                    { title: "מפתח .NET", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "מפתח Embedded", company: "חברת סטארט-אפ", location: "רמת גן", url: "https://www.gotfriends.co.il" }
+                ],
+                devops: [
+                    { title: "מהנדס DevOps", company: "AWS", location: "תל אביב", url: "https://aws.amazon.com/careers" },
+                    { title: "מומחה תשתיות ענן", company: "Microsoft", location: "הרצליה", url: "https://careers.microsoft.com" },
+                    { title: "מומחה ענן ו-DevOps", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מנהל תשתיות", company: "קבוצת יעל", location: "פתח תקווה", url: "https://yaelgroup.com" },
+                    { title: "מהנדס Kubernetes", company: "חברת SaaS", location: "הוד השרון", url: "https://www.sqlink.com" },
+                    { title: "מומחה CI/CD", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "מהנדס תשתיות", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מומחה ענן", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "מהנדס תשתיות", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "DevOps Engineer", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" }
+                ],
+                ai: [
+                    { title: "מהנדס למידת מכונה", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
+                    { title: "חוקר AI", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
+                    { title: "מפתח AI", company: "ארגון רפואי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מומחה AI ו-Vision", company: "חברת הייטק", location: "מרכז", url: "https://www.dialog.co.il" },
+                    { title: "חוקר אלגוריתמים", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" },
+                    { title: "מהנדס Machine Learning", company: "סטארט-אפ סייבר", location: "רמת גן", url: "https://www.gotfriends.co.il" },
+                    { title: "מומחה NLP", company: "Google", location: "חיפה", url: "https://careers.google.com" },
+                    { title: "מהנדס AI", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "חוקר בינה מלאכותית", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "מפתח AI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" }
+                ],
+                data_science: [
+                    { title: "מדען נתונים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "אנליסט נתונים", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "מומחה Big Data", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "Data Scientist", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "אנליסט BI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מומחה Data Lake", company: "Google", location: "חיפה", url: "https://careers.google.com" },
+                    { title: "מדען נתונים", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "אנליסט נתונים", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
+                    { title: "מומחה BI", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
+                    { title: "Data Analyst", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
+                ],
+                product_management: [
+                    { title: "מנהל מוצר", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "בעל מוצר", company: "monday.com", location: "תל אביב", url: "https://www.monday.com/careers" },
+                    { title: "Product Manager", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "מנהל מוצר Outbound", company: "חברת SaaS", location: "הוד השרון", url: "https://www.sqlink.com" },
+                    { title: "מנהל מוצר בכיר", company: "Jobnet", location: "תל אביב", url: "https://www.jobnet.co.il" },
+                    { title: "Product Owner", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "מנהל מוצר", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "מוביל מוצר", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "מנהל מוצר", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "Product Manager", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
+                ],
+                qa: [
+                    { title: "מהנדס QA", company: "Amdocs", location: "רעננה", url: "https://www.amdocs.com/careers" },
+                    { title: "בודק תוכנה", company: "Nice", location: "רעננה", url: "https://www.nice.com/careers" },
+                    { title: "QA Automation Engineer", company: "חברת הייטק", location: "תל אביב", url: "https://www.sqlink.com" },
+                    { title: "בודק תוכנה", company: "ארגון ממשלתי", location: "ירושלים", url: "https://jobs.johnbryce.co.il" },
+                    { title: "מומחה אוטומציה", company: "סטארט-אפ", location: "תל אביב", url: "https://www.gotfriends.co.il" },
+                    { title: "QA Engineer", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "בודק תוכנה", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מומחה QA", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "QA Lead", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "בודק תוכנה", company: "Dialog", location: "מרכז", url: "https://www.dialog.co.il" }
+                ],
+                ux_ui: [
+                    { title: "מעצב UX", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "מעצב UI", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "מומחה UX/UI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מעצב ממשקים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "UX Designer", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" },
+                    { title: "מעצב חוויית משתמש", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "UI Designer", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
+                    { title: "מומחה UX", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
+                    { title: "מעצב ממשקים", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "UX/UI Designer", company: "Dialog", location: "מרכז", url: "https://www.dialog.co.il" }
+                ],
+                it_support: [
+                    { title: "מומחה תמיכה טכנית", company: "IBM", location: "תל אביב", url: "https://www.ibm.com/employment" },
+                    { title: "מנהל רשתות", company: "Cisco", location: "נתניה", url: "https://jobs.cisco.com" },
+                    { title: "איש IT", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מומחה תמיכה", company: "קבוצת יעל", location: "פתח תקווה", url: "https://yaelgroup.com" },
+                    { title: "מנהל מערכות", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "איש תמיכה טכנית", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מנהל רשתות", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "מומחה IT", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "איש תמיכה", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "מנהל מערכות", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
+                ],
+                other: [
+                    { title: "מנהל פרויקטים", company: "Elbit Systems", location: "חיפה", url: "https://www.elbitsystems.com/careers" },
+                    { title: "אנליסט עסקי", company: "SAP", location: "רעננה", url: "https://jobs.sap.com" },
+                    { title: "מנהל פרויקטים", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
+                    { title: "אנליסט מערכות", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
+                    { title: "מנהל פרויקטים", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "אנליסט עסקי", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מנהל פרויקטים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "אנליסט מערכות", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "מנהל פרויקטים", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "אנליסט עסקי", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
+                ],
+                unknown: [
+                    { title: "מומחה הייטק", company: "Startup X", location: "תל אביב", url: "https://www.startupx.com/careers" },
+                    { title: "יועץ טכנולוגי", company: "Tech Corp", location: "הרצליה", url: "https://www.techcorp.com/careers" },
+                    { title: "מנהל פרויקטים", company: "Jobnet", location: "תל אביב", url: "https://www.jobnet.co.il" },
+                    { title: "אנליסט מערכות", company: "Drushim", location: "מרכז", url: "https://www.drushim.co.il" },
+                    { title: "מומחה טכנולוגי", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
+                    { title: "יועץ עסקי", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
+                    { title: "מנהל פרויקטים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
+                    { title: "אנליסט טכנולוגי", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
+                    { title: "מומחה הייטק", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
+                    { title: "יועץ טכנולוגי", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
+                ]
+            };
+            return jobListings[domain] || jobListings['unknown'];
+        }
+
+        window.openJobsModal = function() {
+            if (detectedDomain === 'unknown') {
+                alert("אנא העלה קובץ קורות חיים כדי לחפש משרות רלוונטיות.");
+                return;
+            }
+            const jobsList = document.getElementById("jobsList");
+            jobsList.innerHTML = "";
+            const jobs = simulateJobSearch(detectedDomain);
+            jobs.forEach(job => {
+                const li = document.createElement("li");
+                li.innerHTML = `${job.title} ב-${job.company}, ${job.location} - <a href="${job.url}" target="_blank">לפרטים</a>`;
+                jobsList.appendChild(li);
+            });
+            document.getElementById("jobsModal").style.display = "block";
+        };
+
+        window.refreshJobs = function() {
+            if (detectedDomain === 'unknown') {
+                alert("אנא העלה קובץ קורות חיים כדי לחפש משרות רלוונטיות.");
+                return;
+            }
+            openJobsModal();
+            showNotification("רשימת המשרות עודכנה!");
         };
 
         document.getElementById("cvInput").addEventListener("change", async function(e) {
@@ -796,6 +1053,8 @@
                         }
                         await analyzeCV(text);
                         showNotification("קובץ קורות החיים הועלה בהצלחה!");
+                        currentTipIndex = 0;
+                        showTip(currentTipIndex);
                     } catch (error) {
                         alert('שגיאה בקריאת קובץ PDF: ' + error.message);
                         console.error(error);
