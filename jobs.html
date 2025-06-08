@@ -140,7 +140,7 @@
             direction: rtl;
             color: #ffcc00;
         }
-        .message-modal, .tips-modal, .jobs-modal {
+        .message-modal, .tips-modal, .jobs-modal, .ai-modal, .help-modal {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -152,11 +152,15 @@
             border: 2px solid #ffcc00;
             box-shadow: 0 8px 16px rgba(0, 255, 255, 0.3);
             font-size: 14px;
-            max-width: 500px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
             z-index: 1000;
             display: none;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
         }
-        .message-modal .close-btn, .tips-modal .close-btn, .jobs-modal .close-btn {
+        .message-modal .close-btn, .tips-modal .close-btn, .jobs-modal .close-btn, .ai-modal .close-btn, .help-modal .close-btn {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -169,15 +173,22 @@
             cursor: pointer;
             font-size: 12px;
         }
-        .message-modal input, .message-modal textarea, .jobs-modal input {
+        .message-modal input, .message-modal textarea, .jobs-modal input, .ai-modal textarea {
             width: 100%;
             margin: 10px 0;
             padding: 5px;
             border: none;
             border-radius: 5px;
             font-size: 14px;
+            font-family: 'Noto Sans Hebrew', sans-serif;
+            direction: rtl;
+            text-align: right;
         }
-        .message-modal button, .jobs-modal button, .tips-modal button {
+        .message-modal textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .message-modal button, .jobs-modal button, .tips-modal button, .ai-modal button {
             padding: 10px 20px;
             background: #00ccff;
             color: #fff;
@@ -186,7 +197,7 @@
             cursor: pointer;
             margin-right: 10px;
         }
-        .message-modal button:hover, .jobs-modal button:hover, .tips-modal button:hover {
+        .message-modal button:hover, .jobs-modal button:hover, .tips-modal button:hover, .ai-modal button:hover {
             background: #00ff99;
         }
         .tips-modal p {
@@ -275,6 +286,32 @@
         .jobs-modal li a:hover {
             text-decoration: underline;
         }
+        .help-modal h3 {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .help-modal p, .help-modal li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .help-modal ul {
+            padding-right: 20px;
+        }
+        .jobs-modal .websites-section {
+            margin-top: 20px;
+        }
+        .jobs-modal .websites-section h4 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .jobs-modal .websites-section ul {
+            list-style-type: disc;
+            padding-right: 20px;
+        }
+        .ai-modal #aiResponse {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Noto+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -306,6 +343,8 @@
             <path d="M30,50 L70,50 M50,30 L50,70 M35,35 L65,65 M65,35 L35,65" stroke="#00ff99" stroke-width="3"/>
         </svg>
         <button class="job-search-button" onclick="openJobsModal()">חפש משרות</button>
+        <button class="job-search-button" onclick="openAIModal()">שאל את ה-AI</button>
+        <button class="job-search-button" onclick="openHelpModal()">עזרה</button>
     </div>
     <div class="container" id="contactContainer"></div>
     <div class="message-modal" id="messageModal">
@@ -328,14 +367,80 @@
     </div>
     <div class="jobs-modal" id="jobsModal">
         <button class="close-btn" onclick="closeJobsModal()">X</button>
-        <h3>משרות זמינות</h3>
-        <ul id="jobsList"></ul>
-        <button onclick="refreshJobs()">רענן משרות</button>
+        <h3>אתרי משרות מומלצים</h3>
+        <div class="websites-section">
+            <ul id="jobWebsitesList"></ul>
+        </div>
+    </div>
+    <div class="ai-modal" id="aiModal">
+        <button class="close-btn" onclick="closeAIModal()">X</button>
+        <h3>עוזר AI לשיפור הכלי</h3>
+        <textarea id="aiInput" rows="5" placeholder="הזן בקשה, לדוגמה: 'הצע שיפורים לקורות החיים שלי' או 'המלץ על אתרי משרות'"></textarea>
+        <button onclick="processAIRequest()">בקש מה-AI</button>
+        <div id="aiResponse" style="margin-top: 15px; font-family: 'Noto Sans Hebrew', sans-serif; direction: rtl;"></div>
+    </div>
+    <div class="help-modal" id="helpModal">
+        <button class="close-btn" onclick="closeHelpModal()">X</button>
+        <h3>איך להשתמש</h3>
+        <ul>
+            <li><strong>העלאת קשרים מלינקדין</strong>:
+                <ul>
+                    <li>הורד את רשימת הקשרים שלך כקובץ <code>Connections.csv</code> מלינקדין.</li>
+                    <li>השתמש בלחצן "העלאת קובץ Connections.csv מלינקדין" כדי להעלות את הקובץ.</li>
+                    <li>הכלי ינתח את הקובץ ויציג את אנשי הקשר בתיבות מקוטלגות (למשל: משאבי אנוש, אבטחת מידע, חברות יעד).</li>
+                </ul>
+            </li>
+            <li><strong>העלאת קורות חיים</strong>:
+                <ul>
+                    <li>השתמש בלחצן "העלאת קורות חיים" כדי להעלות קובץ PDF של קורות החיים שלך.</li>
+                    <li>הכלי ינתח את קורות החיים כדי לזהות את תחום המומחיות שלך (למשל: אבטחת מידע, פיתוח תוכנה) ויתאים את המלצות אתרי המשרות ואת קטגוריות אנשי הקשר בהתאם.</li>
+                </ul>
+            </li>
+            <li><strong>חיפוש אנשי קשר</strong>:
+                <ul>
+                    <li>השתמש בשורת החיפוש כדי לסנן אנשי קשר לפי שם או חברה.</li>
+                    <li>לחץ על תיבת איש קשר כדי לפתוח חלון הודעה עם תבנית מוכנה מראש לפנייה.</li>
+                </ul>
+            </li>
+            <li><strong>חיפוש משרות</strong>:
+                <ul>
+                    <li>לחץ על "חפש משרות" כדי לצפות ברשימת אתרי משרות מומלצים המותאמים לתחום המומחיות שזוהה בקורות החיים.</li>
+                    <li>האתרים כוללים שם וקישור ישיר לחיפוש משרות.</li>
+                </ul>
+            </li>
+            <li><strong>עוזר AI</strong>:
+                <ul>
+                    <li>לחץ על "שאל את ה-AI" כדי לפתוח את חלון העוזר הווירטואלי.</li>
+                    <li>הזן בקשות כמו "הצע שיפורים לקורות החיים" או "המלץ על אתרי משרות" כדי לקבל הצעות מותאמות אישית.</li>
+                </ul>
+            </li>
+            <li><strong>טיפים לראיון עבודה</strong>:
+                <ul>
+                    <li>לאחר העלאת קורות חיים, צפה בטיפים לראיונות עבודה בחלון הטיפים, עם ניווט באמצעות הלחצנים "קודם" ו"הבא".</li>
+                </ul>
+            </li>
+        </ul>
+        <h3>תכונות</h3>
+        <ul>
+            <li><strong>קטלוג דינמי של אנשי קשר</strong>: אנשי הקשר מחולקים לקטגוריות לפי תפקידם ותחום המומחיות שלך (למשל: משאבי אנוש, מפתחים, חברות יעד).</li>
+            <li><strong>מקרא בצבעים</strong>: סנן אנשי קשר לפי קבוצה באמצעות טבלת המקרא, עם גבולות בצבעים שונים לזיהוי קל.</li>
+            <li><strong>תבניות הודעות</strong>: תבניות הודעות מוכנות מראש בשתי שפות (עברית ואנגלית), מותאמות לתפקידו של איש הקשר ולמומחיות שלך, עם תמיכה מלאה ב-RTL.</li>
+            <li><strong>המלצות אתרי משרות</strong>: המלצות על אתרי משרות מובילים בישראל, מותאמות לתחום המומחיות שלך, עם קישורים ישירים.</li>
+            <li><strong>הצעות מבוססות AI</strong>: קבל הצעות לשיפור קורות חיים, המלצות על אתרי משרות, תבניות הודעות מותאמות, והצעות לשדרוג הכלי.</li>
+        </ul>
+        <h3>הערות</h3>
+        <ul>
+            <li>ודא שקובץ <code>Connections.csv</code> כולל עמודות כמו "First Name", "Last Name", "Company" ו-"URL".</li>
+            <li>קורות החיים חייבים להיות בקובץ PDF לצורך ניתוח.</li>
+            <li>המלצות אתרי המשרות מבוססות על ניתוח קורות החיים שלך.</li>
+            <li>לשיפור תכונות ה-AI, שקול לשלב את ממשק ה-API של xAI (בקר ב-<a href="https://x.ai/api" target="_blank">https://x.ai/api</a> לפרטים).</li>
+        </ul>
+        <p>נבנה על ידי יניב אביסרור. התחברו אליי ב-<a href="https://www.linkedin.com/in/yaniv-avisror/" target="_blank">LinkedIn</a>.</p>
     </div>
     <div class="notification" id="notification"></div>
     <footer>
         כלי זה נבנה על ידי יניב אביסרור 
-        <a href="https://www.linkedin.com/in/yaniv-avisror" target="_blank">חפשו אותי בלינקדין</a>
+        <a href="https://www.linkedin.com/in/yaniv-avisror/" target="_blank">חפשו אותי בלינקדין</a>
     </footer>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -345,6 +450,10 @@
         let detectedDomain = 'unknown';
         let suggestedSkill = 'relevant high-tech expertise';
         let currentTipIndex = 0;
+        let lastCVText = '';
+        const CONTACTS_PER_PAGE = 50; // Limit for pagination
+        let currentPage = 1;
+        let userProfile = { name: '', email: '' }; // Store user details
 
         const domainKeywords = {
             cybersecurity: ["cybersecurity", "penetration tester", "red team", "security analyst", "ciso", "soc analyst", "ethical hacker"],
@@ -397,6 +506,24 @@
             "הציגו דוגמאות קונקרטיות להישגים מקצועיים תוך שימוש בשיטת STAR (Situation, Task, Action, Result).",
             "שאלו שאלות חכמות על התפקיד והצוות כדי להראות עניין ומוטיבציה.",
             "תרגלו תקשורת ברורה ובטוחה, והקפידו על שפת גוף חיובית במהלך הראיון."
+        ];
+
+        const jobWebsites = [
+            { name: "LinkedIn", url: "https://www.linkedin.com", domains: ["cybersecurity", "development", "devops", "ai", "data_science", "product_management", "qa", "ux_ui", "it_support", "other", "unknown"] },
+            { name: "goozali", url: "https://en.goozali.com", domains: ["development", "cybersecurity", "ai", "data_science", "devops", "qa", "ux_ui"] },
+            { name: "techit.co.il", url: "https://www.techit.co.il", domains: ["cybersecurity", "development", "devops", "ai", "data_science", "qa", "ux_ui"] },
+            { name: "AllJobs", url: "https://www.alljobs.co.il", domains: ["cybersecurity", "development", "devops", "ai", "data_science", "product_management", "qa", "ux_ui", "it_support", "other"] },
+            { name: "JobMaster", url: "https://www.jobmaster.co.il", domains: ["development", "it_support", "other", "qa"] },
+            { name: "Drushim", url: "https://www.drushim.co.il", domains: ["cybersecurity", "development", "devops", "it_support", "other"] },
+            { name: "Start-Up Nation Central", url: "https://startupnationcentral.org", domains: ["development", "ai", "cybersecurity", "product_management", "data_science", "ux_ui"] },
+            { name: "Secret Tel Aviv Job Board", url: "https://secrettelaviv.com", domains: ["development", "ux_ui", "product_management", "other"] },
+            { name: "Nefesh B’Nefesh Job Board", url: "https://www.nbn.org.il", domains: ["it_support", "other", "development", "cybersecurity"] },
+            { name: "Jobnet", url: "https://www.jobnet.co.il", domains: ["development", "qa", "it_support", "other"] },
+            { name: "Dialog", url: "https://www.dialog.co.il/high-tech/jobs", domains: ["development", "cybersecurity", "ai", "data_science", "qa", "ux_ui"] },
+            { name: "Log-On", url: "https://b.log-on.com", domains: ["development", "it_support", "devops", "qa"] },
+            { name: "SQLINK", url: "https://www.sqlink.com", domains: ["development", "cybersecurity", "qa", "devops", "it_support"] },
+            { name: "CTech by Calcalist", url: "https://www.calcalistech.com", domains: ["cybersecurity", "ai", "development", "devops", "product_management"] },
+            { name: "See-V", url: "https://see-v.co.il", domains: ["development", "ai", "data_science", "ux_ui"] }
         ];
 
         let dynamicCategories = [];
@@ -540,6 +667,11 @@
                     return false;
                 }
 
+                if (connections.length > 1000) {
+                    alert('הקובץ מכיל יותר מדי שורות (' + connections.length + '). הכלי תומך בעד 1000 אנשי קשר לשיפור הביצועים.');
+                    connections = connections.slice(0, 1000);
+                }
+
                 alert('קובץ נטען עם ' + connections.length + ' שורות');
                 console.log('CSV data:', connections);
 
@@ -582,9 +714,9 @@
                     rawContacts.push(
                         {
                             id: 'itayamram',
-                            name: 'Itay Amram',
+                            name: 'איתי עמרם',
                             company: 'Exsitu Cloud IT Services Ltd.',
-                            position: 'Information Security Analyst',
+                            position: 'אנליסט אבטחת מידע',
                             group: 'Cybersecurity',
                             lang: 'Hebrew/Both',
                             email: 'לא זמין; צור קשר דרך LinkedIn',
@@ -594,9 +726,9 @@
                         },
                         {
                             id: 'chaimfrish',
-                            name: 'Chaim Frish',
+                            name: 'חיים פריש',
                             company: 'C2A Security',
-                            position: 'Full Stack Developer',
+                            position: 'מפתח Full Stack',
                             group: 'Development',
                             lang: 'Hebrew/Both',
                             email: 'לא זמין; צור קשר דרך LinkedIn',
@@ -611,6 +743,7 @@
                 console.log('Raw contacts:', rawContacts);
 
                 contactData = rawContacts;
+                currentPage = 1;
                 renderContactBoxes(contactData);
                 showNotification("קובץ LinkedIn הועלה והרשת המקצועית עודכנה בהצלחה!");
                 return true;
@@ -621,9 +754,9 @@
                 contactData = [
                     {
                         id: 'itayamram',
-                        name: 'Itay Amram',
+                        name: 'איתי עמרם',
                         company: 'Exsitu Cloud IT Services Ltd.',
-                        position: 'Information Security Analyst',
+                        position: 'אנליסט אבטחת מידע',
                         group: 'Cybersecurity',
                         lang: 'Hebrew/Both',
                         email: 'לא זמין; צור קשר דרך LinkedIn',
@@ -633,9 +766,9 @@
                     },
                     {
                         id: 'chaimfrish',
-                        name: 'Chaim Frish',
+                        name: 'חיים פריש',
                         company: 'C2A Security',
-                        position: 'Full Stack Developer',
+                        position: 'מפתח Full Stack',
                         group: 'Development',
                         lang: 'Hebrew/Both',
                         email: 'לא זמין; צור קשר דרך LinkedIn',
@@ -644,6 +777,7 @@
                         target: false
                     }
                 ];
+                currentPage = 1;
                 renderContactBoxes(contactData);
                 showNotification("שגיאה בטעינת הקובץ. מוצגים נתוני דוגמה.");
                 return false;
@@ -651,9 +785,16 @@
         }
 
         async function analyzeCV(text) {
+            lastCVText = text; // Store CV text for AI agent
             text = text.toLowerCase();
             detectedDomain = 'unknown';
             let domainCounts = {};
+
+            // Extract potential user details from CV
+            const nameMatch = text.match(/שם\s*:\s*([\u0590-\u05FF\s]+)|name\s*:\s*([a-zA-Z\s]+)/i);
+            const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            userProfile.name = nameMatch ? (nameMatch[1] || nameMatch[2] || '').trim() : '';
+            userProfile.email = emailMatch ? emailMatch[0] : '';
 
             for (const [domain, keywords] of Object.entries(domainKeywords)) {
                 let count = keywords.reduce((sum, keyword) => sum + (text.match(new RegExp(keyword, 'gi')) || []).length, 0);
@@ -673,70 +814,70 @@
             switch (detectedDomain) {
                 case "cybersecurity":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "cyber", name: "סייבר", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "development":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "developer", name: "מפתחים", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "devops":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "devops", name: "DevOps", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "ai":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "ai", name: "מומחי AI", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "data_science":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "data_science", name: "מדעני נתונים", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "product_management":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "product", name: "מנהלי מוצר", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "qa":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "qa", name: "בודקי תוכנה", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "ux_ui":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "ux_ui", name: "מעצבי UX/UI", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 case "it_support":
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "it_support", name: "תמיכה טכנית", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
                     break;
                 default:
                     dynamicCategories = [
-                        { id: "hr", name: "HR", color: colors[0] },
+                        { id: "hr", name: "משאבי אנוש", color: colors[0] },
                         { id: "professional", name: "מקצועיים", color: colors[1] },
                         { id: "target_company", name: "חברות יעד", color: colors[5] }
                     ];
@@ -797,7 +938,13 @@
                 container.appendChild(div);
                 return;
             }
-            filteredData.forEach(d => {
+
+            // Pagination
+            const start = (currentPage - 1) * CONTACTS_PER_PAGE;
+            const end = start + CONTACTS_PER_PAGE;
+            const paginatedData = filteredData.slice(start, end);
+
+            paginatedData.forEach(d => {
                 const category = getContactCategory(d);
                 const catName = dynamicCategories.find(c => c.id === category)?.name || category;
                 const div = document.createElement("div");
@@ -815,6 +962,34 @@
                 div.addEventListener("click", () => openMessageModal(d));
                 container.appendChild(div);
             });
+
+            // Add pagination controls
+            if (filteredData.length > CONTACTS_PER_PAGE) {
+                const pagination = document.createElement("div");
+                pagination.style.textAlign = "center";
+                pagination.style.marginTop = "20px";
+                const prevButton = document.createElement("button");
+                prevButton.textContent = "קודם";
+                prevButton.disabled = currentPage === 1;
+                prevButton.onclick = () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        renderContactBoxes(data);
+                    }
+                };
+                const nextButton = document.createElement("button");
+                nextButton.textContent = "הבא";
+                nextButton.disabled = end >= filteredData.length;
+                nextButton.onclick = () => {
+                    if (end < filteredData.length) {
+                        currentPage++;
+                        renderContactBoxes(data);
+                    }
+                };
+                pagination.appendChild(prevButton);
+                pagination.appendChild(nextButton);
+                container.appendChild(pagination);
+            }
         }
 
         function openMessageModal(d) {
@@ -827,15 +1002,19 @@
             const skill = domainSkills[detectedDomain] || 'מומחיות טכנולוגית רלוונטית';
             const skillEn = domainSkillsEn[detectedDomain] || 'relevant high-tech expertise';
             let msgSubject, msgBody;
+
+            const userName = userProfile.name || '[שמך]';
+            const userEmail = userProfile.email || '[אימייל/LinkedIn שלך]';
+
             if (category === "hr") {
                 msgSubject = `חיפוש הזדמנויות תעסוקה ב-${d.company || "חברתך"}`;
-                msgBody = `שלום ${d.name},\n\nאני [Your Name], מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומחפש הזדמנויות תעסוקה ב-${d.company || "חברתך"}. לאור הניסיון שלי ב-${skill}, אשמח לדון בתפקידים פתוחים או לקבל המלצות למנהלי גיוס. האם תוכל/י לשתף פרטים נוספים או לקבוע שיחה קצרה?\n\nתודה רבה,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional seeking opportunities at ${d.company || "your company"}. With my experience in ${skillEn}, I’d love to discuss open roles or get referrals to hiring managers. Could you share further details or schedule a brief call?\n\nBest regards,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+                msgBody = `שלום ${d.name},\n\nאני ${userName}, מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומחפש הזדמנויות תעסוקה ב-${d.company || "חברתך"}. לאור הניסיון שלי ב-${skill}, אשמח לדון בתפקידים פתוחים או לקבל המלצות למנהלי גיוס. האם תוכל/י לשתף פרטים נוספים או לקבוע שיחה קצרה?\n\nתודה רבה,\n${userName}\n${userEmail}\n\nDear ${d.name},\n\nI’m ${userName}, a ${domain} professional seeking opportunities at ${d.company || "your company"}. With my experience in ${skillEn}, I’d love to discuss open roles or get referrals to hiring managers. Could you share further details or schedule a brief call?\n\nBest regards,\n${userName}\n${userEmail}`;
             } else if (category === "target_company") {
                 msgSubject = `חקירת הזדמנויות ב-${d.company || "חברתך"}`;
-                msgBody = `שלום ${d.name},\n\nשמי [Your Name], ואני מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain} עם עניין רב ב-${d.company || "חברתך"}. בהתבסס על המוניטין המרשים של החברה, אשמח לחקור הזדמנויות עבודה או שיתופי פעולה שבהם אוכל לתרום מהניסיון שלי ב-${skill}. האם תוכל/י להפנות אותי לאיש קשר רלוונטי או לשתף פרטים נוספים?\n\nתודה מראש,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional with a strong interest in ${d.company || "your company"}. Given your company’s impressive reputation, I’d like to explore job opportunities or collaborations where I can contribute my expertise in ${skillEn}. Could you direct me to a relevant contact or share further details?\n\nThank you,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+                msgBody = `שלום ${d.name},\n\nשמי ${userName}, ואני מומחה בתחום ${domain === 'unknown' ? 'ההייטק' : domain} עם עניין רב ב-${d.company || "חברתך"}. בהתבסס על המוניטין המרשים של החברה, אשמח לחקור הזדמנויות עבודה או שיתופי פעולה שבהם אוכל לתרום מהניסיון שלי ב-${skill}. האם תוכל/י להפנות אותי לאיש קשר רלוונטי או לשתף פרטים נוספים?\n\nתודה מראש,\n${userName}\n${userEmail}\n\nDear ${d.name},\n\nI’m ${userName}, a ${domain} professional with a strong interest in ${d.company || "your company"}. Given your company’s impressive reputation, I’d like to explore job opportunities or collaborations where I can contribute my expertise in ${skillEn}. Could you direct me to a relevant contact or share further details?\n\nThank you,\n${userName}\n${userEmail}`;
             } else {
                 msgSubject = "הרחבת רשת מקצועית בתחום ההייטק";
-                msgBody = `שלום ${d.name},\n\nאני [Your Name], עוסק בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומעוניין להרחיב את הרשת המקצועית שלי עם מומחים ב-${d.company || "תחומך"}. עם ניסיון ב-${skill}, אני מחפש הזדמנויות לשיתוף ידע, שיתופי פעולה או המלצות. אשמח לקבוע שיחה קצרה כדי להכיר טוב יותר.\n\nבברכה,\n[Your Name]\n[Your LinkedIn/Email, optional]\n\nDear ${d.name},\n\nI’m [Your Name], a ${domain} professional looking to expand my network with experts at ${d.company || "your field"}. With experience in ${skillEn}, I’m eager to explore knowledge sharing, collaborations, or referrals. Would you be open to a brief call to connect?\n\nBest regards,\n[Your Name]\n[Your LinkedIn/Email, optional]`;
+                msgBody = `שלום ${d.name},\n\nאני ${userName}, עוסק בתחום ${domain === 'unknown' ? 'ההייטק' : domain}, ומעוניין להרחיב את הרשת המקצועית שלי עם מומחים ב-${d.company || "תחומך"}. עם ניסיון ב-${skill}, אני מחפש הזדמנויות לשיתוף ידע, שיתופי פעולה או המלצות. אשמח לקבוע שיחה קצרה כדי להכיר טוב יותר.\n\nבברכה,\n${userName}\n${userEmail}\n\nDear ${d.name},\n\nI’m ${userName}, a ${domain} professional looking to expand my network with experts at ${d.company || "your field"}. With experience in ${skillEn}, I’m eager to explore knowledge sharing, collaborations, or referrals. Would you be open to a brief call to connect?\n\nBest regards,\n${userName}\n${userEmail}`;
             }
             messageSubject.value = msgSubject;
             messageBody.value = msgBody;
@@ -853,6 +1032,14 @@
 
         window.closeJobsModal = function() {
             document.getElementById("jobsModal").style.display = "none";
+        };
+
+        window.closeAIModal = function() {
+            document.getElementById("aiModal").style.display = "none";
+        };
+
+        window.closeHelpModal = function() {
+            document.getElementById("helpModal").style.display = "none";
         };
 
         window.sendMessage = function() {
@@ -873,168 +1060,104 @@
             });
         };
 
-        function simulateJobSearch(domain) {
-            const jobListings = {
-                cybersecurity: [
-                    { title: "אנליסט אבטחת מידע", company: "Check Point", location: "תל אביב", url: "https://www.checkpoint.com/careers" },
-                    { title: "מומחה חדירה", company: "CyberArk", location: "הרצליה", url: "https://www.cyberark.com/careers" },
-                    { title: "סוקר אבטחת מידע PT", company: "ארגון פיננסי", location: "שפלה", url: "https://www.sqlink.com" },
-                    { title: "מהנדס אבטחת מידע", company: "Microsoft", location: "הרצליה", url: "https://careers.microsoft.com" },
-                    { title: "חוקר חולשות", company: "סטארט-אפ סייבר", location: "תל אביב", url: "https://www.gotfriends.co.il" },
-                    { title: "מיישם הגנת סייבר", company: "ארגון ממשלתי", location: "ירושלים", url: "https://jobs.johnbryce.co.il" },
-                    { title: "מנהל CSOC", company: "בנק השקעות", location: "תל אביב", url: "https://www.nisha.co.il" },
-                    { title: "אחראי מודעות סייבר", company: "ארגון ציבורי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מומחה אבטחת ענן", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "מנחה סייבר", company: "חברה גדולה", location: "שרון", url: "https://www.sqlink.com" }
-                ],
-                development: [
-                    { title: "מפתח Full Stack", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "מהנדס תוכנה", company: "Google", location: "חיפה", url: "https://careers.google.com" },
-                    { title: "מפתח Python", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מפתח Web", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מפתח Mobile", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "Computer Vision Developer", company: "חברת הייטק", location: "מרכז", url: "https://www.dialog.co.il" },
-                    { title: "מפתח תוכנה", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "מפתח WordPress", company: "סוכנות דיגיטל", location: "תל אביב", url: "https://www.dialog.co.il" },
-                    { title: "מפתח .NET", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "מפתח Embedded", company: "חברת סטארט-אפ", location: "רמת גן", url: "https://www.gotfriends.co.il" }
-                ],
-                devops: [
-                    { title: "מהנדס DevOps", company: "AWS", location: "תל אביב", url: "https://aws.amazon.com/careers" },
-                    { title: "מומחה תשתיות ענן", company: "Microsoft", location: "הרצליה", url: "https://careers.microsoft.com" },
-                    { title: "מומחה ענן ו-DevOps", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מנהל תשתיות", company: "קבוצת יעל", location: "פתח תקווה", url: "https://yaelgroup.com" },
-                    { title: "מהנדס Kubernetes", company: "חברת SaaS", location: "הוד השרון", url: "https://www.sqlink.com" },
-                    { title: "מומחה CI/CD", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "מהנדס תשתיות", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מומחה ענן", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "מהנדס תשתיות", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "DevOps Engineer", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" }
-                ],
-                ai: [
-                    { title: "מהנדס למידת מכונה", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
-                    { title: "חוקר AI", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
-                    { title: "מפתח AI", company: "ארגון רפואי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מומחה AI ו-Vision", company: "חברת הייטק", location: "מרכז", url: "https://www.dialog.co.il" },
-                    { title: "חוקר אלגוריתמים", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" },
-                    { title: "מהנדס Machine Learning", company: "סטארט-אפ סייבר", location: "רמת גן", url: "https://www.gotfriends.co.il" },
-                    { title: "מומחה NLP", company: "Google", location: "חיפה", url: "https://careers.google.com" },
-                    { title: "מהנדס AI", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "חוקר בינה מלאכותית", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "מפתח AI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" }
-                ],
-                data_science: [
-                    { title: "מדען נתונים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "אנליסט נתונים", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "מומחה Big Data", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "Data Scientist", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "אנליסט BI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מומחה Data Lake", company: "Google", location: "חיפה", url: "https://careers.google.com" },
-                    { title: "מדען נתונים", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "אנליסט נתונים", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
-                    { title: "מומחה BI", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
-                    { title: "Data Analyst", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
-                ],
-                product_management: [
-                    { title: "מנהל מוצר", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "בעל מוצר", company: "monday.com", location: "תל אביב", url: "https://www.monday.com/careers" },
-                    { title: "Product Manager", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "מנהל מוצר Outbound", company: "חברת SaaS", location: "הוד השרון", url: "https://www.sqlink.com" },
-                    { title: "מנהל מוצר בכיר", company: "Jobnet", location: "תל אביב", url: "https://www.jobnet.co.il" },
-                    { title: "Product Owner", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "מנהל מוצר", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "מוביל מוצר", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "מנהל מוצר", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "Product Manager", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
-                ],
-                qa: [
-                    { title: "מהנדס QA", company: "Amdocs", location: "רעננה", url: "https://www.amdocs.com/careers" },
-                    { title: "בודק תוכנה", company: "Nice", location: "רעננה", url: "https://www.nice.com/careers" },
-                    { title: "QA Automation Engineer", company: "חברת הייטק", location: "תל אביב", url: "https://www.sqlink.com" },
-                    { title: "בודק תוכנה", company: "ארגון ממשלתי", location: "ירושלים", url: "https://jobs.johnbryce.co.il" },
-                    { title: "מומחה אוטומציה", company: "סטארט-אפ", location: "תל אביב", url: "https://www.gotfriends.co.il" },
-                    { title: "QA Engineer", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "בודק תוכנה", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מומחה QA", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "QA Lead", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "בודק תוכנה", company: "Dialog", location: "מרכז", url: "https://www.dialog.co.il" }
-                ],
-                ux_ui: [
-                    { title: "מעצב UX", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "מעצב UI", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "מומחה UX/UI", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מעצב ממשקים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "UX Designer", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" },
-                    { title: "מעצב חוויית משתמש", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "UI Designer", company: "Mobileye", location: "ירושלים", url: "https://www.mobileye.com/careers" },
-                    { title: "מומחה UX", company: "Intel", location: "פתח תקווה", url: "https://jobs.intel.com" },
-                    { title: "מעצב ממשקים", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "UX/UI Designer", company: "Dialog", location: "מרכז", url: "https://www.dialog.co.il" }
-                ],
-                it_support: [
-                    { title: "מומחה תמיכה טכנית", company: "IBM", location: "תל אביב", url: "https://www.ibm.com/employment" },
-                    { title: "מנהל רשתות", company: "Cisco", location: "נתניה", url: "https://jobs.cisco.com" },
-                    { title: "איש IT", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מומחה תמיכה", company: "קבוצת יעל", location: "פתח תקווה", url: "https://yaelgroup.com" },
-                    { title: "מנהל מערכות", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "איש תמיכה טכנית", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מנהל רשתות", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "מומחה IT", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "איש תמיכה", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "מנהל מערכות", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
-                ],
-                other: [
-                    { title: "מנהל פרויקטים", company: "Elbit Systems", location: "חיפה", url: "https://www.elbitsystems.com/careers" },
-                    { title: "אנליסט עסקי", company: "SAP", location: "רעננה", url: "https://jobs.sap.com" },
-                    { title: "מנהל פרויקטים", company: "קבוצת יעל", location: "תל אביב", url: "https://yaelgroup.com" },
-                    { title: "אנליסט מערכות", company: "ארגון פיננסי", location: "מרכז", url: "https://www.sqlink.com" },
-                    { title: "מנהל פרויקטים", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "אנליסט עסקי", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מנהל פרויקטים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "אנליסט מערכות", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "מנהל פרויקטים", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "אנליסט עסקי", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
-                ],
-                unknown: [
-                    { title: "מומחה הייטק", company: "Startup X", location: "תל אביב", url: "https://www.startupx.com/careers" },
-                    { title: "יועץ טכנולוגי", company: "Tech Corp", location: "הרצליה", url: "https://www.techcorp.com/careers" },
-                    { title: "מנהל פרויקטים", company: "Jobnet", location: "תל אביב", url: "https://www.jobnet.co.il" },
-                    { title: "אנליסט מערכות", company: "Drushim", location: "מרכז", url: "https://www.drushim.co.il" },
-                    { title: "מומחה טכנולוגי", company: "Wix", location: "תל אביב", url: "https://www.wix.com/jobs" },
-                    { title: "יועץ עסקי", company: "Fiverr", location: "תל אביב", url: "https://www.fiverr.com/careers" },
-                    { title: "מנהל פרויקטים", company: "PayPal", location: "תל אביב", url: "https://www.paypal.com/careers" },
-                    { title: "אנליסט טכנולוגי", company: "eBay", location: "נתניה", url: "https://careers.ebay.com" },
-                    { title: "מומחה הייטק", company: "Outbrain", location: "נתניה", url: "https://www.outbrain.com/careers" },
-                    { title: "יועץ טכנולוגי", company: "גוזלי", location: "תל אביב", url: "https://goozali.com" }
-                ]
-            };
-            return jobListings[domain] || jobListings['unknown'];
+        function openAIModal() {
+            document.getElementById("aiModal").style.display = "block";
+        }
+
+        function openHelpModal() {
+            document.getElementById("helpModal").style.display = "block";
+        }
+
+        function getRecommendedWebsites() {
+            const seen = new Set();
+            const recommended = jobWebsites
+                .filter(website => website.domains.includes(detectedDomain))
+                .slice(0, 5)
+                .filter(website => {
+                    if (seen.has(website.name)) return false;
+                    seen.add(website.name);
+                    return true;
+                });
+            // If fewer than 5, add general-purpose sites
+            if (recommended.length < 5) {
+                jobWebsites
+                    .filter(website => website.domains.includes("unknown") && !seen.has(website.name))
+                    .slice(0, 5 - recommended.length)
+                    .forEach(website => {
+                        seen.add(website.name);
+                        recommended.push(website);
+                    });
+            }
+            return recommended;
         }
 
         window.openJobsModal = function() {
             if (detectedDomain === 'unknown') {
-                alert("אנא העלה קובץ קורות חיים כדי לחפש משרות רלוונטיות.");
+                alert("אנא העלה קובץ קורות חיים כדי לקבל המלצות אתרי משרות רלוונטיות.");
                 return;
             }
-            const jobsList = document.getElementById("jobsList");
-            jobsList.innerHTML = "";
-            const jobs = simulateJobSearch(detectedDomain);
-            jobs.forEach(job => {
+            const websitesList = document.getElementById("jobWebsitesList");
+            websitesList.innerHTML = "";
+            const recommendedWebsites = getRecommendedWebsites();
+            recommendedWebsites.forEach(website => {
                 const li = document.createElement("li");
-                li.innerHTML = `${job.title} ב-${job.company}, ${job.location} - <a href="${job.url}" target="_blank">לפרטים</a>`;
-                jobsList.appendChild(li);
+                li.innerHTML = `<a href="${website.url}" target="_blank">${website.name}</a>`;
+                websitesList.appendChild(li);
             });
             document.getElementById("jobsModal").style.display = "block";
         };
 
-        window.refreshJobs = function() {
-            if (detectedDomain === 'unknown') {
-                alert("אנא העלה קובץ קורות חיים כדי לחפש משרות רלוונטיות.");
-                return;
+        function processAIRequest() {
+            const aiInput = document.getElementById("aiInput").value.toLowerCase();
+            const aiResponse = document.getElementById("aiResponse");
+            let responseText = '';
+
+            if (aiInput.includes('שיפור') && aiInput.includes('קורות חיים')) {
+                const keywords = domainKeywords[detectedDomain] || domainKeywords['unknown'];
+                responseText = `הצעה לשיפור קורות החיים:\n- הוסף מילות מפתח כמו "${keywords.slice(0, 3).join(', ')}" כדי להתאים למשרות בתחום ${domainSkills[detectedDomain] || 'הייטק'}.\n- הדגש תוצאות כמותיות, כמו "הגדלתי יעילות ב-20%".\n- התאם את קורות החיים לכל משרה באמצעות התמקדות במיומנויות רלוונטיות.\n- שקול להוסיף קישור לפרופיל LinkedIn מעודכן או תיק עבודות.`;
+            } else if (aiInput.includes('משרות') || aiInput.includes('אתרי')) {
+                if (detectedDomain === 'unknown') {
+                    responseText = 'אנא העלה קובץ קורות חיים כדי לקבל המלצות מותאמות לשוק העבודה.\n\n**מידע כללי על שוק ההייטק בישראל (2025):**\n- **מגמות**: תחומי הסייבר, AI ופיתוח תוכנה ממשיכים לצמוח, עם דרישה גבוהה למומחי ענן ו-DevOps.\n- **כישורים מבוקשים**: שליטה ב-Python, Kubernetes, ו-AWS היא יתרון משמעותי.\n- **טווחי שכר**: מפתחי תוכנה בכירים יכולים להרוויח 30,000–50,000 ₪ לחודש; מומחי סייבר עד 60,000 ₪.\n- **אסטרטגיות חיפוש**:\n  - השתמש בלינקדין ליצירת קשרים עם מגייסים.\n  - השתתף בכנסים כמו CyberTech או Tech Summit בתל אביב.\n  - עדכן פרופילך באתרים כלליים כמו:\n    - LinkedIn: https://www.linkedin.com\n    - AllJobs: https://www.alljobs.co.il\n    - JobMaster: https://www.jobmaster.co.il';
+                } else {
+                    const recommendedWebsites = getRecommendedWebsites();
+                    const domainName = domainSkills[detectedDomain];
+                    let marketInsights = '';
+                    let careerAdvice = '';
+                    switch (detectedDomain) {
+                        case 'cybersecurity':
+                            marketInsights = `- **מגמות**: ב-2025, יש ביקוש גבוה למומחי SOC, GRC, וחדירה (Penetration Testing). חברות כמו Check Point ו-CyberArk מגייסות באגרסיביות.\n- **שכר**: אנליסטים זוטרים מרוויחים כ-20,000 ₪; בכירים עד 50,000 ₪ לחודש.`;
+                            careerAdvice = `- **קורות חיים**: הדגש הסמכות כמו CISSP או CEH.\n- **רשתות**: הצטרף לקהילות כמו OWASP Israel.\n- **הכשרה**: שקול קורסים ב-Coursera או TryHackMe.`;
+                            break;
+                        case 'development':
+                            marketInsights = `- **מגמות**: מפתחי Full Stack ו-Mobile (React, Flutter) מבוקשים מאוד. סטארט-אפים בתל אביב מגייסים למשרות היברידיות.\n- **שכר**: מפתחים זוטרים מרוויחים 18,000–25,000 ₪; בכירים עד 45,000 ₪.`;
+                            careerAdvice = `- **קורות חיים**: כלול קישורים ל-GitHub או פרויקטים.\n- **רשתות**: השתתף בהאקתונים כמו Wix Hackathon.\n- **הכשרה**: למד טכנולוגיות כמו TypeScript או Next.js.`;
+                            break;
+                        case 'devops':
+                            marketInsights = `- **מגמות**: דרישה גבוהה למומחי Kubernetes ו-AWS, במיוחד בחברות SaaS.\n- **שכר**: מהנדסי DevOps מרוויחים 25,000–50,000 ₪ לחודש.`;
+                            careerAdvice = `- **קורות חיים**: הדגש ניסיון עם CI/CD ו-Terraform.\n- **רשתות**: הצטרף לקבוצות DevOps בלינקדין.\n- **הכשרה**: קבל הסמכת AWS Certified DevOps Engineer.`;
+                            break;
+                        case 'ai':
+                            marketInsights = `- **מגמות**: תפקידי NLP ו-Computer Vision צומחים, עם דגש על Generative AI.\n- **שכר**: מהנדסי AI מרוויחים 30,000–60,000 ₪ לחודש.`;
+                            careerAdvice = `- **קורות חיים**: כלול פרויקטים עם TensorFlow או PyTorch.\n- **רשתות**: השתתף בכנסים כמו AI Week בתל אביב.\n- **הכשרה**: למד קורסים ב-DeepLearning.AI.`;
+                            break;
+                        default:
+                            marketInsights = `- **מגמות**: שוק ההייטק בישראל ממשיך לצמוח, עם דרישה למגוון תפקידים טכנולוגיים.\n- **שכר**: תלוי בתפקיד, נע בין 18,000–50,000 ₪ לחודש.`;
+                            careerAdvice = `- **קורות חיים**: התאם את קורות החיים לתפקיד הספציפי.\n- **רשתות**: השתתף באירועי נטוורקינג בתל אביב.\n- **הכשרה**: שקול קורסים רלוונטיים ב-Udemy או Coursera.`;
+                    }
+                    responseText = `**חיפוש משרות בתחום ${domainName} (2025):**\n\n**תובנות שוק**:\n${marketInsights}\n\n**אסטרטגיות חיפוש עבודה**:\n- **נטוורקינג**: צור קשר עם מגייסים בלינקדין והשתתף באירועי תעשייה.\n- **קורות חיים**: עדכן את קורות החיים שלך עם מילות מפתח רלוונטיות והדגש הישגים כמותיים.\n- **ראיונות**: התכונן לשאלות טכניות והתאמן על תרחישי STAR.\n\n**המלצות להתפתחות מקצועית**:\n${careerAdvice}\n\n**אתרי משרות מומלצים**:\n` + 
+                        recommendedWebsites.map(website => `- ${website.name}: ${website.url}`).join('\n');
+                }
+            } else if (aiInput.includes('הודעה') || aiInput.includes('תבנית')) {
+                responseText = `תבנית הודעה מותאמת לדוגמה:\nשלום [שם],\nאני ${userProfile.name || '[שמך]'}, מומחה ב${domainSkills[detectedDomain] || 'הייטק'}, ומחפש הזדמנויות ב${detectedDomain !== 'unknown' ? detectedDomain : 'תחום ההייטק'}. אשמח לשמוע על תפקידים פתוחים או לקבל המלצות. האם תוכל לעזור?\nתודה,\n${userProfile.name || '[שמך]'}\n${userProfile.email || '[אימייל/LinkedIn שלך]'}`;
+            } else if (aiInput.includes('שיפור הכלי')) {
+                responseText = `הצעות לשיפור הכלי:\n1. הוסף סינון אנשי קשר לפי מיקום.\n2. שלב ממשק API לחיפוש משרות בזמן אמת.\n3. הוסף ויזואליזציה של רשת קשרים.\n4. תמוך בייבוא פרופילים מפורטים מלינקדין.\n5. הוסף ממשק רב-לשוני.`;
+            } else {
+                responseText = 'אנא ציין בקשה ברורה, כמו "הצע שיפורים לקורות החיים" או "המלץ על אתרי משרות".';
             }
-            openJobsModal();
-            showNotification("רשימת המשרות עודכנה!");
-        };
+
+            aiResponse.textContent = responseText;
+            showNotification('הבקשה עובדה בהצלחה!');
+        }
 
         document.getElementById("cvInput").addEventListener("change", async function(e) {
             const file = e.target.files[0];
@@ -1086,7 +1209,7 @@
             renderContactBoxes(filteredData);
         });
 
-        // Initial categories (default: cybersecurity)
+        // Initial setup
         analyzeCV("penetration tester");
     </script>
 </body>
